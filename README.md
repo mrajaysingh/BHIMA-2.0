@@ -193,12 +193,12 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 ### 🌟 **Star this repository if you found it helpful!**
 
-[![GitHub stars](https://img.shields.io/github/stars/yourusername/bhima-v2?style=social)](https://github.com/yourusername/bhima-v2/stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/yourusername/bhima-v2?style=social)](https://github.com/yourusername/bhima-v2/network)
+[![GitHub stars](https://img.shields.io/github/stars/mrajaysingh/bhima-v2?style=social)](https://github.com/mrajaysingh/bhima-v2/)
+[![GitHub forks](https://img.shields.io/github/forks/mrajaysingh/bhima-v2?style=social)](https://github.com/mrajaysingh/bhima-v2/)
 
 ---
 
-**Made with ❤️ by [Your Name](https://github.com/yourusername)**
+**Made with ❤️ by [Your Name](https://github.com/mrajaysingh)**
 
 *Powered by [SKYBER](https://skybersupport.me/)*
 
