@@ -2,19 +2,22 @@ import React, { useState, useEffect, useMemo, useCallback, lazy, Suspense } from
 import { Bot, Brain, Zap, Shield, Users, ArrowRight, Sun, Moon, Menu, X, ChevronUp } from 'lucide-react';
 import DecryptedText from './components/DecryptedText';
 import Preloader from './components/Preloader';
+import PricingModal from './components/PricingModal';
+import ProfileCard from './components/ProfileCard';
+import DeveloperInfo from './components/DeveloperInfo';
 
 // Lazy load heavy components for better performance
 const Hyperspeed = lazy(() => import('./components/Hyperspeed'));
 const Particles = lazy(() => import('./components/Particles'));
 
 function App() {
-  const [scrollY, setScrollY] = useState(0);
   const [headerWidth, setHeaderWidth] = useState(100);
   const [isSticky, setIsSticky] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isPricingModalOpen, setIsPricingModalOpen] = useState(false);
 
   // Memoize expensive calculations
   const headerStyle = useMemo(() => ({
@@ -39,8 +42,6 @@ function App() {
           const documentHeight = document.documentElement.scrollHeight - window.innerHeight;
           const scrollPercentage = (currentScrollY / documentHeight) * 100;
 
-          setScrollY(currentScrollY);
-
           if (currentScrollY > 0) {
             setIsSticky(true);
           } else {
@@ -48,11 +49,24 @@ function App() {
           }
 
           if (scrollPercentage >= 2) {
-            const widthRange = 30;
-            const scrollRange = 23;
-            const scrollProgress = Math.min((scrollPercentage - 2) / scrollRange, 1);
-            const newWidth = 100 - (widthRange * scrollProgress);
-            setHeaderWidth(Math.max(newWidth, 70));
+            // Check if it's mobile (screen width less than 1024px)
+            const isMobile = window.innerWidth < 1024;
+            
+            if (isMobile) {
+              // Mobile: reduce to 80% maximum
+              const widthRange = 20; // 100% - 80% = 20%
+              const scrollRange = 23;
+              const scrollProgress = Math.min((scrollPercentage - 2) / scrollRange, 1);
+              const newWidth = 100 - (widthRange * scrollProgress);
+              setHeaderWidth(Math.max(newWidth, 80));
+            } else {
+              // Desktop: keep existing behavior
+              const widthRange = 30;
+              const scrollRange = 23;
+              const scrollProgress = Math.min((scrollPercentage - 2) / scrollRange, 1);
+              const newWidth = 100 - (widthRange * scrollProgress);
+              setHeaderWidth(Math.max(newWidth, 70));
+            }
           } else {
             setHeaderWidth(100);
           }
@@ -94,6 +108,14 @@ function App() {
     setIsLoading(false);
   }, []);
 
+  const handleOpenPricingModal = useCallback(() => {
+    setIsPricingModalOpen(true);
+  }, []);
+
+  const handleClosePricingModal = useCallback(() => {
+    setIsPricingModalOpen(false);
+  }, []);
+
   // Memoize particle props to prevent unnecessary re-renders
   const particleProps = useMemo(() => ({
     particleCount: 150,
@@ -115,12 +137,12 @@ function App() {
       {isLoading && <Preloader onComplete={handlePreloaderComplete} />}
       
       {/* Main App */}
-      <div className={`min-h-screen transition-colors duration-500 ${
+      <div className={`min-h-screen transition-colors duration-500 scroll-smooth ${
         isDarkMode ? 'bg-black' : 'bg-gray-50'
       }`}>
       {/* Header */}
       <header 
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-700 ease-out ${
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-700 ease-out will-change-transform ${
           isSticky 
             ? isDarkMode 
               ? 'bg-black/40 backdrop-blur-3xl shadow-2xl border border-gray-700/30' 
@@ -131,15 +153,15 @@ function App() {
         }`}
         style={headerStyle}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-1.5 sm:py-2">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2 sm:py-2.5 lg:py-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center shadow-lg transition-colors duration-500 ${
+              <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center shadow-lg transition-all duration-500 ease-out hover:scale-105 ${
                 isDarkMode 
                   ? 'bg-gradient-to-br from-gray-100 to-gray-200' 
                   : 'bg-gradient-to-br from-gray-800 to-gray-900'
               }`}>
-                <Bot className={`w-3 h-3 sm:w-5 sm:h-5 transition-colors duration-500 ${
+                <Bot className={`w-3 h-3 sm:w-5 sm:h-5 transition-all duration-500 ease-out ${
                   isDarkMode ? 'text-gray-900' : 'text-white'
                 }`} />
               </div>
@@ -152,10 +174,10 @@ function App() {
                   revealDirection="start"
                   useOriginalCharsOnly={false}
                   characters="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+"
-                  className={`font-orbitron text-base sm:text-xl font-bold leading-tight tracking-wide transition-colors duration-500 ${
+                  className={`font-orbitron text-base sm:text-xl font-bold leading-tight tracking-wide transition-all duration-500 ease-out hover:scale-105 ${
                     isDarkMode ? 'text-white' : 'text-slate-900'
                   }`}
-                  encryptedClassName={`font-orbitron text-base sm:text-xl font-bold leading-tight tracking-wide transition-colors duration-500 ${
+                  encryptedClassName={`font-orbitron text-base sm:text-xl font-bold leading-tight tracking-wide transition-all duration-500 ease-out ${
                     isDarkMode ? 'text-gray-400' : 'text-slate-500'
                   }`}
                   animateOn="hover"
@@ -177,25 +199,30 @@ function App() {
             
             {/* Desktop Navigation */}
             <nav className="hidden lg:flex items-center space-x-4 xl:space-x-6">
-              <a href="#features" className={`transition-colors text-sm ${
+              <a href="#features" className={`transition-all duration-300 ease-out hover:scale-105 text-sm ${
                 isDarkMode 
                   ? 'text-gray-300 hover:text-white' 
                   : 'text-slate-600 hover:text-slate-900'
               }`}>Features</a>
-              <a href="#about" className={`transition-colors text-sm ${
+              <a href="#about" className={`transition-all duration-300 ease-out hover:scale-105 text-sm ${
                 isDarkMode 
                   ? 'text-gray-300 hover:text-white' 
                   : 'text-slate-600 hover:text-slate-900'
               }`}>About</a>
-              <a href="#pricing" className={`transition-colors text-sm ${
+              <a href="#pricing" className={`transition-all duration-300 ease-out hover:scale-105 text-sm ${
                 isDarkMode 
                   ? 'text-gray-300 hover:text-white' 
                   : 'text-slate-600 hover:text-slate-900'
               }`}>Pricing</a>
+              <a href="#changelogs" className={`transition-all duration-300 ease-out hover:scale-105 text-sm ${
+                isDarkMode 
+                  ? 'text-gray-300 hover:text-white' 
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}>Changelogs</a>
               {/* Theme Toggle Inside Header - Only visible when header width is 100% */}
               <button
                 onClick={toggleTheme}
-                className={`w-7 h-7 xl:w-8 xl:h-8 rounded-full flex items-center justify-center transition-all duration-700 hover:scale-105 ${
+                className={`w-7 h-7 xl:w-8 xl:h-8 rounded-full flex items-center justify-center transition-all duration-700 ease-out hover:scale-105 active:scale-95 ${
                   headerWidth === 100 ? 'opacity-100 scale-100' : 'opacity-0 scale-75 pointer-events-none'
                 } ${
                   isDarkMode 
@@ -209,11 +236,14 @@ function App() {
                   <Moon className={`w-3.5 h-3.5 xl:w-4 xl:h-4 ${isDarkMode ? 'text-gray-200' : 'text-slate-700'}`} />
                 )}
               </button>
-              <button className={`px-3 py-1.5 xl:px-4 xl:py-2 rounded-full transition-all duration-300 hover:scale-105 text-sm ${
-                isDarkMode 
-                  ? 'bg-white text-gray-900 hover:bg-gray-100' 
-                  : 'bg-slate-900 text-white hover:bg-slate-800'
-              }`}>
+              <button 
+                onClick={handleOpenPricingModal}
+                className={`px-3 py-1.5 xl:px-4 xl:py-2 rounded-full transition-all duration-300 ease-out hover:scale-105 active:scale-95 text-sm ${
+                  isDarkMode 
+                    ? 'bg-white text-gray-900 hover:bg-gray-100' 
+                    : 'bg-slate-900 text-white hover:bg-slate-800'
+                }`}
+              >
                 Get Started
               </button>
             </nav>
@@ -223,7 +253,7 @@ function App() {
               {/* Mobile Theme Toggle */}
               <button
                 onClick={toggleTheme}
-                className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-105 ${
+                className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ease-out hover:scale-105 active:scale-95 ${
                   isDarkMode 
                     ? 'bg-gray-700 hover:bg-gray-600' 
                     : 'bg-slate-100 hover:bg-slate-200'
@@ -237,7 +267,7 @@ function App() {
               </button>
               <button
                 onClick={toggleMobileMenu}
-                className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-105 ${
+                className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ease-out hover:scale-105 active:scale-95 ${
                   isDarkMode 
                     ? 'bg-gray-700 hover:bg-gray-600' 
                     : 'bg-slate-100 hover:bg-slate-200'
@@ -254,7 +284,7 @@ function App() {
         </div>
         
         {/* Mobile Menu */}
-        <div className={`lg:hidden transition-all duration-300 ease-out ${
+        <div className={`lg:hidden transition-all duration-500 ease-out ${
           isMobileMenuOpen ? 'max-h-64 opacity-100' : 'max-h-0 opacity-0'
         } overflow-hidden ${
           isSticky 
@@ -269,7 +299,7 @@ function App() {
             <a 
               href="#features" 
               onClick={closeMobileMenu}
-              className={`block transition-colors py-1.5 text-sm font-medium ${
+              className={`block transition-all duration-300 ease-out hover:scale-105 py-1.5 text-sm font-medium ${
                 isDarkMode 
                   ? 'text-gray-300 hover:text-white' 
                   : 'text-slate-600 hover:text-slate-900'
@@ -280,7 +310,7 @@ function App() {
             <a 
               href="#about" 
               onClick={closeMobileMenu}
-              className={`block transition-colors py-1.5 text-sm font-medium ${
+              className={`block transition-all duration-300 ease-out hover:scale-105 py-1.5 text-sm font-medium ${
                 isDarkMode 
                   ? 'text-gray-300 hover:text-white' 
                   : 'text-slate-600 hover:text-slate-900'
@@ -291,7 +321,7 @@ function App() {
             <a 
               href="#pricing" 
               onClick={closeMobileMenu}
-              className={`block transition-colors py-1.5 text-sm font-medium ${
+              className={`block transition-all duration-300 ease-out hover:scale-105 py-1.5 text-sm font-medium ${
                 isDarkMode 
                   ? 'text-gray-300 hover:text-white' 
                   : 'text-slate-600 hover:text-slate-900'
@@ -299,9 +329,23 @@ function App() {
             >
               Pricing
             </a>
-            <button 
+            <a 
+              href="#changelogs" 
               onClick={closeMobileMenu}
-              className={`w-full px-4 py-2 rounded-full transition-all duration-300 hover:scale-105 text-sm font-medium mt-3 ${
+              className={`block transition-all duration-300 ease-out hover:scale-105 py-1.5 text-sm font-medium ${
+                isDarkMode 
+                  ? 'text-gray-300 hover:text-white' 
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Changelogs
+            </a>
+            <button 
+              onClick={() => {
+                closeMobileMenu();
+                handleOpenPricingModal();
+              }}
+              className={`w-full px-4 py-2 rounded-full transition-all duration-300 ease-out hover:scale-105 active:scale-95 text-sm font-medium mt-3 ${
                 isDarkMode 
                   ? 'bg-white text-gray-900 hover:bg-gray-100' 
                   : 'bg-slate-900 text-white hover:bg-slate-800'
@@ -322,7 +366,7 @@ function App() {
       >
         <button
           onClick={toggleTheme}
-          className={`w-8 h-8 xl:w-10 xl:h-10 backdrop-blur-3xl shadow-2xl rounded-full flex items-center justify-center transition-all duration-300 hover:scale-105 ${
+          className={`w-8 h-8 xl:w-10 xl:h-10 backdrop-blur-3xl shadow-2xl rounded-full flex items-center justify-center transition-all duration-300 ease-out hover:scale-105 active:scale-95 ${
             isDarkMode 
               ? 'bg-black/40 hover:bg-black/60 border border-gray-700/30' 
               : 'bg-white/40 hover:bg-white/60 border border-white/30'
@@ -346,7 +390,7 @@ function App() {
       >
         <button
           onClick={scrollToTop}
-          className={`group relative w-12 h-12 backdrop-blur-3xl shadow-2xl rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 ${
+          className={`group relative w-12 h-12 backdrop-blur-3xl shadow-2xl rounded-full flex items-center justify-center transition-all duration-300 ease-out hover:scale-110 active:scale-95 ${
             isDarkMode 
               ? 'bg-black/40 hover:bg-black/60 border border-gray-700/30' 
               : 'bg-white/40 hover:bg-white/60 border border-white/30'
@@ -429,15 +473,18 @@ function App() {
               and learns from every interaction to deliver personalized assistance.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4">
-              <button className={`px-6 sm:px-8 py-3 sm:py-4 rounded-full transition-all duration-300 hover:scale-105 font-semibold flex items-center justify-center space-x-2 text-sm sm:text-base ${
-                isDarkMode 
-                  ? 'bg-white text-gray-900 hover:bg-gray-100' 
-                  : 'bg-slate-900 text-white hover:bg-slate-800'
-              }`}>
+              <button 
+                onClick={handleOpenPricingModal}
+                className={`px-6 sm:px-8 py-3 sm:py-4 rounded-full transition-all duration-300 ease-out hover:scale-105 active:scale-95 font-semibold flex items-center justify-center space-x-2 text-sm sm:text-base ${
+                  isDarkMode 
+                    ? 'bg-white text-gray-900 hover:bg-gray-100' 
+                    : 'bg-slate-900 text-white hover:bg-slate-800'
+                }`}
+              >
                 <span>Start Chatting</span>
-                <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
+                <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-300 ease-out group-hover:translate-x-1" />
               </button>
-              <button className={`border-2 px-6 sm:px-8 py-3 sm:py-4 rounded-full transition-all duration-300 hover:scale-105 font-semibold text-sm sm:text-base ${
+              <button className={`border-2 px-6 sm:px-8 py-3 sm:py-4 rounded-full transition-all duration-300 ease-out hover:scale-105 active:scale-95 font-semibold text-sm sm:text-base ${
                 isDarkMode 
                   ? 'border-gray-600 text-gray-200 hover:border-gray-500' 
                   : 'border-slate-200 text-slate-700 hover:border-slate-300'
@@ -489,7 +536,7 @@ function App() {
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 max-w-6xl mx-auto">
-            <div className={`p-6 sm:p-8 rounded-2xl shadow-sm border hover:shadow-md transition-all duration-300 hover:scale-105 ${
+            <div className={`p-6 sm:p-8 rounded-2xl shadow-sm border hover:shadow-md transition-all duration-500 ease-out hover:scale-105 ${
               isDarkMode 
                 ? 'bg-gray-800 border-gray-700' 
                 : 'bg-white border-slate-100'
@@ -510,7 +557,7 @@ function App() {
                 Powered by state-of-the-art language models that understand context and provide human-like responses.
               </p>
             </div>
-            <div className={`p-6 sm:p-8 rounded-2xl shadow-sm border hover:shadow-md transition-all duration-300 hover:scale-105 ${
+            <div className={`p-6 sm:p-8 rounded-2xl shadow-sm border hover:shadow-md transition-all duration-500 ease-out hover:scale-105 ${
               isDarkMode 
                 ? 'bg-gray-800 border-gray-700' 
                 : 'bg-white border-slate-100'
@@ -531,7 +578,7 @@ function App() {
                 Get instant responses with our optimized infrastructure designed for speed and reliability.
               </p>
             </div>
-            <div className={`p-6 sm:p-8 rounded-2xl shadow-sm border hover:shadow-md transition-all duration-300 hover:scale-105 md:col-span-2 lg:col-span-1 ${
+            <div className={`p-6 sm:p-8 rounded-2xl shadow-sm border hover:shadow-md transition-all duration-500 ease-out hover:scale-105 md:col-span-2 lg:col-span-1 ${
               isDarkMode 
                 ? 'bg-gray-800 border-gray-700' 
                 : 'bg-white border-slate-100'
@@ -680,7 +727,7 @@ function App() {
             }`}>Choose the plan that fits your needs</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 max-w-5xl mx-auto">
-            <div className={`p-6 sm:p-8 rounded-2xl shadow-sm border hover:shadow-md transition-all duration-300 ${
+            <div className={`p-6 sm:p-8 rounded-2xl shadow-sm border hover:shadow-md transition-all duration-500 ease-out hover:scale-105 ${
               isDarkMode 
                 ? 'bg-gray-800 border-gray-700' 
                 : 'bg-white border-slate-100'
@@ -709,15 +756,18 @@ function App() {
                   }`}>Basic support</span>
                 </li>
               </ul>
-              <button className={`w-full border-2 py-2.5 sm:py-3 rounded-full transition-all duration-300 hover:scale-105 text-sm sm:text-base ${
-                isDarkMode 
-                  ? 'border-gray-600 text-gray-200 hover:border-gray-500' 
-                  : 'border-slate-200 text-slate-700 hover:border-slate-300'
-              }`}>
+              <button 
+                onClick={handleOpenPricingModal}
+                className={`w-full border-2 py-2.5 sm:py-3 rounded-full transition-all duration-300 ease-out hover:scale-105 active:scale-95 text-sm sm:text-base ${
+                  isDarkMode 
+                    ? 'border-gray-600 text-gray-200 hover:border-gray-500' 
+                    : 'border-slate-200 text-slate-700 hover:border-slate-300'
+                }`}
+              >
                 Get Started
               </button>
             </div>
-            <div className={`p-6 sm:p-8 rounded-2xl shadow-lg transform hover:scale-105 transition-all duration-300 md:scale-105 ${
+            <div className={`p-6 sm:p-8 rounded-2xl shadow-lg transform hover:scale-105 transition-all duration-500 ease-out md:scale-105 ${
               isDarkMode 
                 ? 'bg-white text-gray-900' 
                 : 'bg-slate-900 text-white'
@@ -744,7 +794,7 @@ function App() {
                   <span className="text-sm sm:text-base">Advanced features</span>
                 </li>
               </ul>
-              <button className={`w-full py-2.5 sm:py-3 rounded-full transition-all duration-300 hover:scale-105 font-semibold text-sm sm:text-base ${
+              <button className={`w-full py-2.5 sm:py-3 rounded-full transition-all duration-300 ease-out hover:scale-105 active:scale-95 font-semibold text-sm sm:text-base ${
                 isDarkMode 
                   ? 'bg-gray-900 text-white hover:bg-gray-800' 
                   : 'bg-white text-slate-900 hover:bg-slate-50'
@@ -752,7 +802,7 @@ function App() {
                 Choose Pro
               </button>
             </div>
-            <div className={`p-6 sm:p-8 rounded-2xl shadow-sm border hover:shadow-md transition-all duration-300 ${
+            <div className={`p-6 sm:p-8 rounded-2xl shadow-sm border hover:shadow-md transition-all duration-500 ease-out hover:scale-105 ${
               isDarkMode 
                 ? 'bg-gray-800 border-gray-700' 
                 : 'bg-white border-slate-100'
@@ -781,13 +831,46 @@ function App() {
                   }`}>Dedicated support</span>
                 </li>
               </ul>
-              <button className={`w-full border-2 py-2.5 sm:py-3 rounded-full transition-all duration-300 hover:scale-105 text-sm sm:text-base ${
+              <button className={`w-full border-2 py-2.5 sm:py-3 rounded-full transition-all duration-300 ease-out hover:scale-105 active:scale-95 text-sm sm:text-base ${
                 isDarkMode 
                   ? 'border-gray-600 text-gray-200 hover:border-gray-500' 
                   : 'border-slate-200 text-slate-700 hover:border-slate-300'
               }`}>
                 Contact Sales
               </button>
+            </div>
+          </div>
+        </section>
+
+        {/* Reputated Developers Section */}
+        <section className="relative w-full sm:w-11/12 lg:w-4/5 mx-auto px-4 sm:px-6 py-12 sm:py-16 lg:py-20">
+          <div className="flex flex-col items-center justify-center mb-8 sm:mb-12 lg:mb-16 px-4 w-full">
+            <div className="flex items-center w-full justify-center">
+              <div className={`flex-1 border-t transition-colors duration-500 ${isDarkMode ? 'border-white/20' : 'border-slate-300'}`}></div>
+              <h2 className={`mx-6 text-2xl sm:text-3xl lg:text-4xl font-bold transition-colors duration-500 ${
+                isDarkMode ? 'text-white' : 'text-slate-900'
+              }`}>Developer &lt;/&gt;</h2>
+              <div className={`flex-1 border-t transition-colors duration-500 ${isDarkMode ? 'border-white/20' : 'border-slate-300'}`}></div>
+            </div>
+            <p className={`mt-3 text-base sm:text-lg lg:text-xl transition-colors duration-500 ${isDarkMode ? 'text-gray-300' : 'text-slate-600'}`}>Meet the minds behind the project and connect with our lead developer.</p>
+          </div>
+          <div className="flex flex-col md:flex-row gap-8">
+            {/* Main Developer Card (left) */}
+            <div className="w-full md:w-[400px]">
+              <ProfileCard
+                avatarUrl="/person.png"
+                iconUrl="/iconpattern.png"
+                name="Javi A. Torres"
+                title="Software Engineer"
+                handle="javicodes"
+                status="Online"
+                contactText="Contact Me"
+                miniAvatarUrl="/person.png"
+              />
+            </div>
+            {/* Developer Info (right) */}
+            <div className="flex-1">
+              <DeveloperInfo isDarkMode={isDarkMode} />
             </div>
           </div>
         </section>
@@ -807,11 +890,14 @@ function App() {
             }`}>
               Join millions of users who are already experiencing the power of intelligent conversation.
             </p>
-            <button className={`px-6 sm:px-8 py-3 sm:py-4 rounded-full transition-all duration-300 hover:scale-105 font-semibold text-sm sm:text-base ${
-              isDarkMode 
-                ? 'bg-gray-900 text-white hover:bg-gray-800' 
-                : 'bg-white text-slate-900 hover:bg-slate-50'
-            }`}>
+            <button 
+              onClick={handleOpenPricingModal}
+              className={`px-6 sm:px-8 py-3 sm:py-4 rounded-full transition-all duration-300 ease-out hover:scale-105 active:scale-95 font-semibold text-sm sm:text-base ${
+                isDarkMode 
+                  ? 'bg-gray-900 text-white hover:bg-gray-800' 
+                  : 'bg-white text-slate-900 hover:bg-slate-50'
+              }`}
+            >
               Start Your Journey
             </button>
           </div>
@@ -871,9 +957,9 @@ function App() {
               <ul className={`space-y-1.5 sm:space-y-2 ${
                 isDarkMode ? 'text-gray-500' : 'text-slate-400'
               }`}>
-                <li><a href="#features" className="hover:text-white transition-colors text-sm sm:text-base">Features</a></li>
-                <li><a href="#pricing" className="hover:text-white transition-colors text-sm sm:text-base">Pricing</a></li>
-                <li><a href="#" className="hover:text-white transition-colors text-sm sm:text-base">API</a></li>
+                <li><a href="#features" className="hover:text-white transition-all duration-300 ease-out hover:scale-105 text-sm sm:text-base">Features</a></li>
+                <li><a href="#pricing" className="hover:text-white transition-all duration-300 ease-out hover:scale-105 text-sm sm:text-base">Pricing</a></li>
+                <li><a href="#" className="hover:text-white transition-all duration-300 ease-out hover:scale-105 text-sm sm:text-base">API</a></li>
               </ul>
             </div>
             <div>
@@ -881,9 +967,9 @@ function App() {
               <ul className={`space-y-1.5 sm:space-y-2 ${
                 isDarkMode ? 'text-gray-500' : 'text-slate-400'
               }`}>
-                <li><a href="#about" className="hover:text-white transition-colors text-sm sm:text-base">About</a></li>
-                <li><a href="#" className="hover:text-white transition-colors text-sm sm:text-base">Blog</a></li>
-                <li><a href="#" className="hover:text-white transition-colors text-sm sm:text-base">Careers</a></li>
+                <li><a href="#about" className="hover:text-white transition-all duration-300 ease-out hover:scale-105 text-sm sm:text-base">About</a></li>
+                <li><a href="#" className="hover:text-white transition-all duration-300 ease-out hover:scale-105 text-sm sm:text-base">Blog</a></li>
+                <li><a href="#" className="hover:text-white transition-all duration-300 ease-out hover:scale-105 text-sm sm:text-base">Careers</a></li>
               </ul>
             </div>
             <div>
@@ -891,9 +977,9 @@ function App() {
               <ul className={`space-y-1.5 sm:space-y-2 ${
                 isDarkMode ? 'text-gray-500' : 'text-slate-400'
               }`}>
-                <li><a href="#" className="hover:text-white transition-colors text-sm sm:text-base">Help Center</a></li>
-                <li><a href="#" className="hover:text-white transition-colors text-sm sm:text-base">Contact</a></li>
-                <li><a href="#" className="hover:text-white transition-colors text-sm sm:text-base">Privacy</a></li>
+                <li><a href="#" className="hover:text-white transition-all duration-300 ease-out hover:scale-105 text-sm sm:text-base">Help Center</a></li>
+                <li><a href="#" className="hover:text-white transition-all duration-300 ease-out hover:scale-105 text-sm sm:text-base">Contact</a></li>
+                <li><a href="#" className="hover:text-white transition-all duration-300 ease-out hover:scale-105 text-sm sm:text-base">Privacy</a></li>
               </ul>
             </div>
           </div>
@@ -925,6 +1011,12 @@ function App() {
           </div>
         </div>
       </footer>
+
+      {/* Pricing Modal */}
+      <PricingModal 
+        isOpen={isPricingModalOpen}
+        onClose={handleClosePricingModal}
+      />
     </div>
     </>
   );
