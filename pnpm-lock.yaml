@@ -2721,14 +2721,6 @@ snapshots:
 
   util-deprecate@1.0.2: {}
 
-  vite@5.4.19(terser@5.43.1):
-    dependencies:
-      esbuild: 0.21.5
-      postcss: 8.5.6
-      rollup: 4.44.2
-    optionalDependencies:
-      fsevents: 2.3.3
-      terser: 5.43.1
 
   which@2.0.2:
     dependencies:
